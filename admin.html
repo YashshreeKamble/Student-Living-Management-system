@@ -1,0 +1,478 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Arbor House | Admin dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="stylesheet" href="styles.css" />
+    <style>
+      .admin-page {
+        min-height: 100vh;
+        background: #f6f8f7;
+      }
+      .admin-topbar {
+        height: 76px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 5vw;
+        background: #fff;
+        border-bottom: 1px solid #e6eceb;
+      }
+      .admin-brand {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font: 700 22px "Space Grotesk";
+      }
+      .admin-brand-mark {
+        display: grid;
+        place-items: center;
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: #f26f52;
+        color: #fff;
+      }
+      .admin-top-actions {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .admin-user {
+        display: flex;
+        align-items: center;
+        gap: 9px;
+        font-size: 12px;
+      }
+      .admin-user small {
+        display: block;
+        color: #82929a;
+        font-size: 10px;
+        margin-top: 2px;
+      }
+      .admin-avatar {
+        display: grid;
+        place-items: center;
+        width: 34px;
+        height: 34px;
+        border-radius: 50%;
+        background: #dfaa87;
+        color: #fff;
+        font-weight: 700;
+      }
+      .admin-logout {
+        background: transparent;
+        color: #65767a;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .admin-account {
+        background: transparent;
+        color: #65767a;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .admin-content {
+        max-width: 1450px;
+        margin: auto;
+        padding: 44px 5vw;
+      }
+      .account-dashboard {
+        max-width: 760px;
+        padding: 26px;
+        background: #fff;
+        border: 1px solid #e6eceb;
+        border-radius: 8px;
+        box-shadow: 0 12px 35px rgba(25, 52, 60, 0.05);
+      }
+      .account-dashboard h2 {
+        font: 600 22px "Space Grotesk";
+        margin: 0 0 8px;
+      }
+      .account-copy {
+        color: #75848a;
+        font-size: 12px;
+        margin: 0 0 20px;
+      }
+      .account-form {
+        max-width: 520px;
+      }
+      .account-form label {
+        display: block;
+        margin: 14px 0 6px;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .account-form input {
+        width: 100%;
+        padding: 11px;
+        border: 1px solid #e6eceb;
+        border-radius: 5px;
+        font: inherit;
+      }
+      .account-form button {
+        margin-top: 20px;
+      }
+      .password-rule {
+        display: block;
+        margin-top: 7px;
+        color: #82929a;
+        font-size: 10px;
+      }
+      .back-dashboard {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 24px;
+        padding: 0;
+        background: transparent;
+        color: #1c9b8b;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .back-dashboard svg { width: 15px; }
+      .admin-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        margin-bottom: 28px;
+      }
+      .admin-heading h1 {
+        font: 700 38px "Space Grotesk";
+        letter-spacing: -1px;
+        margin: 0 0 8px;
+      }
+      .admin-heading p:not(.eyebrow) {
+        color: #75848a;
+        margin: 0;
+      }
+      .admin-actions {
+        display: flex;
+        gap: 10px;
+      }
+      .admin-stats {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-bottom: 22px;
+      }
+      .admin-stat {
+        display: flex;
+        align-items: center;
+        gap: 13px;
+        background: #fff;
+        border: 1px solid #e6eceb;
+        border-radius: 8px;
+        padding: 18px;
+        box-shadow: 0 12px 35px rgba(25, 52, 60, 0.06);
+      }
+      .admin-stat > svg {
+        width: 22px;
+        color: #1c9b8b;
+      }
+      .admin-stat small,
+      .admin-stat strong {
+        display: block;
+      }
+      .admin-stat small {
+        color: #82929a;
+        font-size: 11px;
+      }
+      .admin-stat strong {
+        font-size: 23px;
+        margin-top: 4px;
+      }
+      .admin-stat em {
+        font-style: normal;
+        color: #82929a;
+        font-size: 12px;
+      }
+      .admin-grid {
+        display: grid;
+        grid-template-columns: 1.25fr 0.75fr;
+        gap: 18px;
+      }
+      .admin-panel {
+        background: #fff;
+        border: 1px solid #e6eceb;
+        border-radius: 8px;
+        padding: 22px;
+        box-shadow: 0 12px 35px rgba(25, 52, 60, 0.04);
+      }
+      .admin-panel.wide {
+        grid-column: span 2;
+      }
+      .admin-panel-heading {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .admin-panel h2 {
+        font: 600 20px "Space Grotesk";
+        margin: 0;
+      }
+      .admin-panel .eyebrow {
+        margin-bottom: 7px;
+      }
+      .admin-table {
+        margin-top: 19px;
+      }
+      .admin-row {
+        display: grid;
+        grid-template-columns: 1fr 1.45fr 0.8fr 1fr;
+        align-items: center;
+        gap: 14px;
+        padding: 13px 5px;
+        border-top: 1px solid #e6eceb;
+        font-size: 11px;
+        color: #65767a;
+      }
+      .admin-row strong {
+        font-size: 12px;
+        color: #19343c;
+      }
+      .admin-head {
+        border-top: 0;
+        color: #91a0a2;
+        font-size: 9px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        font-weight: 700;
+      }
+      .admin-row em {
+        justify-self: start;
+      }
+      .notice-item {
+        display: flex;
+        gap: 10px;
+        padding: 14px 0;
+        border-bottom: 1px solid #e6eceb;
+      }
+      .notice-item svg {
+        width: 16px;
+        color: #1c9b8b;
+        flex-shrink: 0;
+      }
+      .notice-item strong,
+      .notice-item small {
+        display: block;
+      }
+      .notice-item strong {
+        font-size: 12px;
+      }
+      .notice-item small {
+        margin-top: 4px;
+        color: #82929a;
+        font-size: 10px;
+      }
+      .admin-refresh {
+        background: transparent;
+        color: #1c9b8b;
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .toast {
+        position: fixed;
+        right: 24px;
+        bottom: 24px;
+        background: #12313a;
+        color: #fff;
+        border-radius: 7px;
+        padding: 12px 15px;
+        font-size: 12px;
+        box-shadow: 0 12px 30px rgba(18, 49, 58, 0.25);
+        z-index: 10;
+        opacity: 0;
+        transform: translateY(18px);
+        pointer-events: none;
+        transition: 0.2s;
+      }
+      .toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+      @media (max-width: 1000px) {
+        .admin-stats {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .admin-grid {
+          grid-template-columns: 1fr;
+        }
+        .admin-panel.wide {
+          grid-column: auto;
+        }
+      }
+      @media (max-width: 650px) {
+        .admin-topbar {
+          padding: 0 18px;
+        }
+        .admin-user span {
+          display: none;
+        }
+        .admin-content {
+          padding: 30px 18px;
+        }
+        .admin-heading {
+          display: block;
+        }
+        .admin-heading h1 {
+          font-size: 30px;
+        }
+        .admin-actions {
+          margin-top: 18px;
+        }
+        .admin-stats {
+          gap: 10px;
+        }
+        .admin-stat {
+          padding: 13px;
+        }
+        .admin-stat strong {
+          font-size: 18px;
+        }
+        .admin-panel {
+          padding: 16px;
+        }
+        .admin-row {
+          grid-template-columns: 1fr 1fr;
+          gap: 8px;
+        }
+        .admin-row span:nth-child(2),
+        .admin-row span:nth-child(3) {
+          font-size: 10px;
+        }
+        .admin-row span:last-child {
+          grid-column: 2;
+          grid-row: 1;
+          justify-self: end;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="admin-page">
+      <header class="admin-topbar">
+        <a class="admin-brand" href="admin.html"
+          ><span class="admin-brand-mark">A</span>Arbor House
+          <small>ADMIN</small></a
+        >
+        <div class="admin-top-actions">
+          <div class="admin-user">
+            <span class="admin-avatar" id="admin-avatar">AD</span
+            ><span
+              ><strong id="admin-name">Admin</strong
+              ><small>Property administrator</small></span
+            >
+          </div>
+          <button class="admin-account" id="account-settings">Account settings</button><button class="admin-logout" id="logout">Log out</button>
+        </div>
+      </header>
+      <main class="admin-content">
+        <section class="admin-heading">
+          <div>
+            <p class="eyebrow">Admin workspace</p>
+            <h1>Property overview</h1>
+            <p>
+              Manage residents, rooms, payments, and notices from one place.
+            </p>
+          </div>
+          <div class="admin-actions">
+            <button class="outline-button" id="refresh">
+              <i data-lucide="refresh-cw"></i>Refresh</button
+            ><button class="primary-button" id="send-notice">
+              <i data-lucide="megaphone"></i>Send notice
+            </button>
+          </div>
+        </section>
+        <section class="admin-stats">
+          <article class="admin-stat">
+            <i data-lucide="users"></i
+            ><span
+              ><small>Total students</small
+              ><strong id="student-count">-</strong></span
+            >
+          </article>
+          <article class="admin-stat">
+            <i data-lucide="bed-double"></i
+            ><span
+              ><small>Occupied beds</small
+              ><strong>164 <em>/ 184</em></strong></span
+            >
+          </article>
+          <article class="admin-stat">
+            <i data-lucide="bed-single"></i
+            ><span><small>Vacant beds</small><strong>14</strong></span>
+          </article>
+          <article class="admin-stat">
+            <i data-lucide="wallet-cards"></i
+            ><span><small>Pending payments</small><strong>₹1.16L</strong></span>
+          </article>
+        </section>
+        <section class="admin-grid">
+          <article class="admin-panel">
+            <div class="admin-panel-heading">
+              <div>
+                <p class="eyebrow">Room inventory</p>
+                <h2>Rooms &amp; bed vacancy</h2>
+              </div>
+            </div>
+            <div class="admin-table" id="room-table">
+              <div class="admin-row admin-head">
+                <span>Room</span><span>Students</span><span>Beds</span
+                ><span>Availability</span>
+              </div>
+            </div>
+          </article>
+          <article class="admin-panel">
+            <div class="admin-panel-heading">
+              <div>
+                <p class="eyebrow">Communication</p>
+                <h2>Recent notices</h2>
+              </div>
+            </div>
+            <div id="notice-list"></div>
+          </article>
+          <article class="admin-panel wide">
+            <div class="admin-panel-heading">
+              <div>
+                <p class="eyebrow">Student directory</p>
+                <h2>All student information</h2>
+              </div>
+            </div>
+            <div class="admin-table" id="student-table">
+              <div class="admin-row admin-head">
+                <span>Student</span><span>Email</span><span>Room</span
+                ><span>Status</span>
+              </div>
+            </div>
+          </article>
+          <article class="admin-panel wide">
+            <div class="admin-panel-heading">
+              <div>
+                <p class="eyebrow">Finance</p>
+                <h2>Recent transactions</h2>
+              </div>
+              <strong class="admin-total">Collected this month: ₹8.42L</strong>
+            </div>
+            <div class="admin-table" id="payment-table">
+              <div class="admin-row admin-head">
+                <span>Student</span><span>Amount</span><span>Date</span
+                ><span>Status</span>
+              </div>
+            </div>
+          </article>
+        </section>
+      </main>
+    </div>
+    <div class="toast" id="toast" role="status"></div>
+    <script src="admin.js"></script>
+  </body>
+</html>

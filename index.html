@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#112f3a">
+  <title>Your PG Name | Student living operations</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .student-logout{display:flex;align-items:center;gap:6px;margin:10px 4px 0;padding:8px 10px;width:calc(100% - 8px);background:#1b414a;color:#dbe8e6;border-radius:6px;font-size:11px;font-weight:700}.student-logout:hover{background:#28515a;color:#fff}.student-logout svg{width:14px}
+    .quick-actions{display:flex;align-items:center;gap:9px;margin:-5px 0 20px;overflow:auto;padding:4px 1px 7px}.quick-actions-label{font-size:10px;text-transform:uppercase;letter-spacing:1px;color:#8a999b;font-weight:700;white-space:nowrap;margin-right:3px}.quick-action{display:flex;align-items:center;gap:7px;white-space:nowrap;background:#fff;border:1px solid #e1eae8;border-radius:6px;padding:9px 11px;color:#456468;font-size:11px;font-weight:700;box-shadow:0 5px 14px rgba(25,52,60,.04);transition:transform .18s ease,border-color .18s ease,box-shadow .18s ease}.quick-action:hover{transform:translateY(-2px);border-color:#b7d4cd;box-shadow:0 8px 18px rgba(25,52,60,.09)}.quick-action svg{width:15px;color:#1c9b8b}.quick-action:nth-child(3) svg{color:#f26f52}.quick-action:nth-child(4) svg{color:#bd821c}.quick-action:nth-child(5) svg{color:#6f9edc}.toast{position:fixed;right:24px;bottom:24px;background:#12313a;color:#fff;border-radius:7px;padding:12px 15px;font-size:12px;box-shadow:0 12px 30px rgba(18,49,58,.25);z-index:10;transform:translateY(18px);opacity:0;pointer-events:none;transition:opacity .2s ease,transform .2s ease}.toast.show{opacity:1;transform:translateY(0)}@media(max-width:700px){.quick-actions{margin-top:-8px}.quick-actions-label{display:none}.toast{right:15px;bottom:15px;left:15px;text-align:center}}
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <div class="brand"><span class="brand-mark">Y</span><span>Your PG Name</span></div>
+      <div class="property-switcher"><span class="property-avatar">A</span><span><small>Managing</small><strong>Arbor House PG</strong></span><i data-lucide="chevrons-up-down"></i></div>
+      <nav class="nav-list">
+        <p class="nav-label">Workspace</p>
+        <button class="nav-item active" data-view="Overview"><i data-lucide="layout-dashboard"></i><span>Home</span></button>
+        <button class="nav-item" data-view="Residents"><i data-lucide="users"></i><span>My profile</span></button>
+        <button class="nav-item" data-view="Rooms & beds"><i data-lucide="bed-double"></i><span>My room</span></button>
+        <button class="nav-item" data-view="Payments"><i data-lucide="wallet-cards"></i><span>Rent & payments</span><b class="alert-count">1</b></button>
+        <button class="nav-item" data-view="Laundry"><i data-lucide="shirt"></i><span>Laundry</span></button>
+        <button class="nav-item" data-view="Mess & menu"><i data-lucide="utensils"></i><span>Food menu</span></button>
+        <p class="nav-label second">Operations</p>
+        <button class="nav-item" data-view="Complaints"><i data-lucide="wrench"></i><span>Help & complaints</span></button>
+        <button class="nav-item" data-view="Visitors"><i data-lucide="scan-face"></i><span>Visitors</span></button>
+        <button class="nav-item" data-view="Notice board"><i data-lucide="megaphone"></i><span>Notices</span></button>
+        <button class="nav-item" data-view="Student services"><i data-lucide="map-pin"></i><span>Services</span></button>
+      </nav>
+      <div class="sidebar-bottom">
+        <button class="nav-item" data-view="Settings"><i data-lucide="settings-2"></i><span>Account</span></button>
+        <div class="user-card"><span class="user-avatar">RK</span><span><strong>Riya Kapoor</strong><small>Student</small></span><button aria-label="Account menu"><i data-lucide="more-horizontal"></i></button></div><button class="student-logout" id="student-logout"><i data-lucide="log-out"></i>Log out</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <button class="mobile-menu" aria-label="Open menu"><i data-lucide="menu"></i></button>
+        <div class="breadcrumb"><span>Arbor House PG</span><i data-lucide="chevron-right"></i><strong id="breadcrumb-view">Overview</strong></div>
+        <div class="top-actions"><label class="search"><i data-lucide="search"></i><input id="global-search" type="search" placeholder="Search residents, rooms..." aria-label="Search"></label><button class="icon-button notification" aria-label="Notifications"><i data-lucide="bell"></i><span></span></button><button class="profile-button">RK</button></div>
+      </header>
+
+      <div class="content-wrap">
+        <section class="page-heading"><div><p class="eyebrow">Saturday, 22 August 2026</p><h1 id="page-title">Good morning, Riya <span>✦</span></h1><p class="subheading">Here’s the pulse of Arbor House today.</p></div><div class="heading-actions"><select id="period-select" aria-label="Select reporting period"><option value="today">Today</option><option value="week">This week</option><option value="month">This month</option></select><button class="primary-button" id="add-resident"><i data-lucide="plus"></i>Add resident</button></div></section>
+
+        <section class="stats-grid" aria-label="Property summary">
+          <article class="stat-card occupancy"><div class="stat-top"><span class="stat-icon"><i data-lucide="building-2"></i></span><span class="trend up"><i data-lucide="trending-up"></i> 4.8%</span></div><p>Occupancy rate</p><strong>89.2<span>%</span></strong><div class="progress"><span style="width:89.2%"></span></div><small>164 of 184 beds occupied</small></article>
+          <article class="stat-card revenue"><div class="stat-top"><span class="stat-icon"><i data-lucide="indian-rupee"></i></span><span class="trend up"><i data-lucide="trending-up"></i> 12.4%</span></div><p>Collected this month</p><strong>₹8.42<span>L</span></strong><small>₹1.16L pending across 21 residents</small><div class="sparkline" aria-hidden="true"><i style="height:35%"></i><i style="height:44%"></i><i style="height:39%"></i><i style="height:63%"></i><i style="height:55%"></i><i style="height:79%"></i><i style="height:72%"></i><i style="height:94%"></i></div></article>
+          <article class="stat-card complaints"><div class="stat-top"><span class="stat-icon"><i data-lucide="message-square-warning"></i></span><span class="trend down"><i data-lucide="trending-down"></i> 9.1%</span></div><p>Open complaints</p><strong>06</strong><small>2 marked urgent · 4 assigned today</small><div class="complaint-dots"><span></span><span></span><span></span><span></span><span></span><span></span></div></article>
+          <article class="stat-card laundry"><div class="stat-top"><span class="stat-icon"><i data-lucide="washing-machine"></i></span><span class="trend neutral">Today</span></div><p>Laundry orders</p><strong>38</strong><small>24 ready for pickup</small><div class="laundry-bar"><span style="width:63%"></span></div><div class="bar-legend"><span>Picked up</span><strong>63%</strong></div></article>
+        </section>
+
+        <section class="quick-actions" aria-label="Quick actions"><span class="quick-actions-label">Quick actions</span><button class="quick-action" data-action="Check-in resident"><i data-lucide="log-in"></i>Check-in</button><button class="quick-action" data-action="Collect rent"><i data-lucide="wallet-cards"></i>Collect rent</button><button class="quick-action" data-action="Post a notice"><i data-lucide="megaphone"></i>Post notice</button><button class="quick-action" data-action="Scan visitor pass"><i data-lucide="qr-code"></i>Scan visitor</button></section>
+
+        <section class="dashboard-grid">
+          <article class="panel activity-panel"><div class="panel-heading"><div><p class="eyebrow">Live feed</p><h2>Today at a glance</h2></div><button class="text-button" id="view-activity">View all <i data-lucide="arrow-up-right"></i></button></div><div class="activity-list"><div class="activity-item"><span class="activity-icon teal"><i data-lucide="log-in"></i></span><div><strong>New check-in completed</strong><p>Ananya Mehta · Room A-204</p></div><time>09:42 AM</time></div><div class="activity-item"><span class="activity-icon coral"><i data-lucide="credit-card"></i></span><div><strong>Rent payment received</strong><p>₹12,500 from Karan Malhotra</p></div><time>09:18 AM</time></div><div class="activity-item"><span class="activity-icon yellow"><i data-lucide="package-check"></i></span><div><strong>Parcel collected</strong><p>Pickup by Devika Shah · OTP verified</p></div><time>08:56 AM</time></div><div class="activity-item"><span class="activity-icon blue"><i data-lucide="utensils"></i></span><div><strong>Mess attendance synced</strong><p>Breakfast · 127 residents scanned</p></div><time>08:30 AM</time></div></div></article>
+          <article class="panel chart-panel"><div class="panel-heading"><div><p class="eyebrow">Financial overview</p><h2>Revenue performance</h2></div><button class="select-button">Last 6 months <i data-lucide="chevron-down"></i></button></div><div class="chart-summary"><strong>₹48.6L</strong><span class="trend up">+18.6% <small>vs last period</small></span></div><div class="chart" aria-label="Revenue chart"><div class="y-axis"><span>10L</span><span>7.5L</span><span>5L</span><span>2.5L</span><span>0</span></div><div class="chart-area"><div class="grid-lines"><i></i><i></i><i></i><i></i><i></i></div><svg viewBox="0 0 600 190" preserveAspectRatio="none" role="img" aria-label="Increasing revenue trend"><defs><linearGradient id="area" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="#f26f52" stop-opacity=".25"/><stop offset="1" stop-color="#f26f52" stop-opacity="0"/></linearGradient></defs><path d="M0,151 C45,140 62,143 101,128 S150,139 193,108 S240,111 282,96 S330,104 367,69 S410,76 456,56 S505,65 544,35 S580,38 600,21 L600,190 L0,190 Z" fill="url(#area)"/><path d="M0,151 C45,140 62,143 101,128 S150,139 193,108 S240,111 282,96 S330,104 367,69 S410,76 456,56 S505,65 544,35 S580,38 600,21" fill="none" stroke="#f26f52" stroke-width="3" vector-effect="non-scaling-stroke"/></svg><div class="x-axis"><span>Mar</span><span>Apr</span><span>May</span><span>Jun</span><span>Jul</span><span>Aug</span></div></div></div></article>
+          <article class="panel residents-panel"><div class="panel-heading"><div><p class="eyebrow">People</p><h2>New residents</h2></div><button class="icon-button" aria-label="More resident options"><i data-lucide="more-horizontal"></i></button></div><div class="resident-table"><div class="resident-row table-head"><span>Resident</span><span>Room</span><span>Status</span></div><div class="resident-row"><span class="person"><i class="avatar peach">AM</i><strong>Ananya Mehta<small>Joined today</small></strong></span><span>A-204</span><em class="status-pill green">Checked in</em></div><div class="resident-row"><span class="person"><i class="avatar mint">RS</i><strong>Rohan Sethi<small>Joined yesterday</small></strong></span><span>B-108</span><em class="status-pill amber">Agreement pending</em></div><div class="resident-row"><span class="person"><i class="avatar lilac">NS</i><strong>Niharika Singh<small>Joined 20 Aug</small></strong></span><span>C-302</span><em class="status-pill green">Checked in</em></div></div><button class="outline-button" id="view-residents">View all residents <i data-lucide="arrow-right"></i></button></article>
+          <article class="panel tasks-panel"><div class="panel-heading"><div><p class="eyebrow">Needs attention</p><h2>Priority tasks <span class="task-count">3</span></h2></div><button class="text-button">See all <i data-lucide="arrow-up-right"></i></button></div><div class="task-list"><button class="task"><span class="task-check"></span><span><strong>Review 2 pending agreements</strong><small>Due by end of day</small></span><i data-lucide="chevron-right"></i></button><button class="task"><span class="task-check"></span><span><strong>Assign urgent complaint</strong><small>Water leakage · Room B-206</small></span><i data-lucide="chevron-right"></i></button><button class="task"><span class="task-check"></span><span><strong>Approve visitor request</strong><small>For resident Priya Nair</small></span><i data-lucide="chevron-right"></i></button></div></article>
+        </section>
+        <footer><span>Havenly operations</span><span>Last synced just now <i data-lucide="refresh-cw"></i></span></footer>
+      </div>
+    </main>
+  </div>
+  <div class="modal-backdrop" id="resident-modal" hidden><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title"><button class="modal-close" id="modal-close" aria-label="Close"><i data-lucide="x"></i></button><p class="eyebrow">Resident directory</p><h2 id="modal-title">Add a resident</h2><p class="modal-copy">Create a profile and reserve a bed in a few details.</p><form id="resident-form"><label>Full name<input required name="name" placeholder="e.g. Aditi Rao"></label><label>Phone number<input required name="phone" type="tel" placeholder="+91 98765 43210"></label><label>Bed preference<select name="bed"><option>Any available bed</option><option>Room A-204</option><option>Room B-108</option><option>Room C-302</option></select></label><button class="primary-button" type="submit">Create resident <i data-lucide="arrow-right"></i></button></form></div></div>
+  <div class="toast" id="toast" role="status"></div>
+  <script>lucide.createIcons();</script><script src="app.js"></script>
+</body>
+</html>
