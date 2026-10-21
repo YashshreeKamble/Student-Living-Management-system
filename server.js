@@ -31,18 +31,13 @@ database.exec(`
     created_at TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
   );
 `);
+try { database.exec("ALTER TABLE users ADD COLUMN bed TEXT"); } catch (error) { if (!error.message.includes('duplicate column name')) throw error; }
+try { database.exec("ALTER TABLE users ADD COLUMN status TEXT NOT NULL DEFAULT 'pending'"); } catch (error) { if (!error.message.includes('duplicate column name')) throw error; }
 
-const noticeCount = database.prepare('SELECT COUNT(*) AS count FROM notices').get().count;
-if (noticeCount === 0) {
-  const seedNotice = database.prepare('INSERT INTO notices (title, message, audience) VALUES (?, ?, ?)');
-  seedNotice.run('Water supply maintenance', 'Water supply will be paused today from 2:00 PM to 4:00 PM.', 'All residents');
-  seedNotice.run('Independence Day holiday', 'The mess will follow the holiday schedule on 15 August.', 'All residents');
-}
-
-const seedUser = database.prepare('INSERT OR IGNORE INTO users (name, email, password_hash, role, room) VALUES (?, ?, ?, ?, ?)');
 if (process.env.SEED_PASSWORD) {
-  seedUser.run('Riya Kapoor', 'riya@student.arborhouse.in', bcrypt.hashSync(process.env.SEED_PASSWORD, 12), 'student', 'A-204');
-  seedUser.run('Arbor Admin', 'admin@arborhouse.in', bcrypt.hashSync(process.env.SEED_PASSWORD, 12), 'admin', null);
+  const seedPasswordHash = bcrypt.hashSync(process.env.SEED_PASSWORD, 12);
+  const seedUser = database.prepare('INSERT INTO users (name, email, password_hash, role, room) VALUES (?, ?, ?, ?, ?) ON CONFLICT(email) DO UPDATE SET password_hash = excluded.password_hash, role = excluded.role, room = excluded.room');
+  seedUser.run('Arbor Admin', 'demo@admin.in', seedPasswordHash, 'admin', null);
 }
 
 app.use(express.json());
@@ -68,7 +63,7 @@ function currentUser(request) {
   cleanExpiredSessions();
   const token = request.headers.cookie?.match(/(?:^|; )arbor_session=([^;]+)/)?.[1];
   if (!token) return null;
-  return database.prepare('SELECT users.id, users.name, users.email, users.role, users.room FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?').get(token, Date.now()) || null;
+  return database.prepare('SELECT users.id, users.name, users.email, users.role, users.room, users.bed, users.status FROM sessions JOIN users ON users.id = sessions.user_id WHERE sessions.token = ? AND sessions.expires_at > ?').get(token, Date.now()) || null;
 }
 
 app.post('/api/auth/login', (request, response) => {
@@ -79,6 +74,9 @@ app.post('/api/auth/login', (request, response) => {
   const user = database.prepare('SELECT * FROM users WHERE (lower(email) = lower(?) OR lower(name) = lower(?)) AND role = ?').get(identifier.trim(), identifier.trim(), role);
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return response.status(401).json({ error: 'The email, name, or password is incorrect.' });
+  }
+  if (user.role === 'student' && user.status !== 'approved') {
+    return response.status(403).json({ error: 'Your registration is pending admin approval and bed allocation.' });
   }
   const token = crypto.randomBytes(32).toString('hex');
   database.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, user.id, Date.now() + 1000 * 60 * 60 * 24 * 7);
@@ -103,8 +101,8 @@ app.post('/api/auth/register', (request, response) => {
     return response.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
   }
   try {
-    database.prepare('INSERT INTO users (name, email, password_hash, role, room) VALUES (?, ?, ?, ?, ?)').run(name.trim(), normalizedEmail, bcrypt.hashSync(password, 12), 'student', null);
-    return response.status(201).json({ message: 'Account created. Please sign in.' });
+    database.prepare("INSERT INTO users (name, email, password_hash, role, room, status) VALUES (?, ?, ?, ?, ?, 'pending')").run(name.trim(), normalizedEmail, bcrypt.hashSync(password, 12), 'student', null);
+    return response.status(201).json({ message: 'Registration submitted. An admin must approve your account and allocate a bed before you can sign in.' });
   } catch (error) {
     if (error.code?.startsWith('SQLITE_CONSTRAINT')) return response.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
     console.error('Registration failed:', error);
@@ -114,29 +112,29 @@ app.post('/api/auth/register', (request, response) => {
 
 app.get('/api/auth/me', (request, response) => {
   const user = currentUser(request);
-  return response.json({ authenticated: Boolean(user), user: user ? { name: user.name, email: user.email, role: user.role, room: user.room } : null });
+  return response.json({ authenticated: Boolean(user), user: user ? { name: user.name, email: user.email, role: user.role, room: user.room, bed: user.bed, status: user.status } : null });
 });
 
 app.get('/api/admin/dashboard', (request, response) => {
   const user = currentUser(request);
   if (!user || user.role !== 'admin') return response.status(403).json({ error: 'Admin access required.' });
-  const students = database.prepare("SELECT id, name, email, room, 'Not assigned' AS bed, 'Active' AS status FROM users WHERE role = 'student' ORDER BY name").all();
+  const students = database.prepare("SELECT id, name, email, room, bed, status FROM users WHERE role = 'student' ORDER BY name").all();
   return response.json({
     students,
-    rooms: [
-      { room: 'A-204', type: 'Double', beds: '2 / 2', vacancy: 'Full', students: 'Ananya Mehta, Riya Kapoor' },
-      { room: 'A-116', type: 'Single', beds: '1 / 1', vacancy: 'Full', students: 'Karan Malhotra' },
-      { room: 'B-108', type: 'Single', beds: '0 / 1', vacancy: '1 bed vacant', students: 'Vacant' },
-      { room: 'B-206', type: 'Single', beds: '0 / 1', vacancy: 'Maintenance', students: 'Water leakage repair' },
-      { room: 'C-302', type: 'Double', beds: '1 / 2', vacancy: '1 bed vacant', students: 'Niharika Singh' }
-    ],
-    payments: [
-      { student: 'Karan Malhotra', amount: '₹12,500', date: '22 Aug, 09:18', status: 'Received' },
-      { student: 'Rohan Sethi', amount: '₹11,800', date: 'Due 24 Aug', status: 'Pending' },
-      { student: 'Priya Nair', amount: '₹13,500', date: 'Due 20 Aug', status: 'Overdue' }
-    ],
+    rooms: [],
+    payments: [],
     notices: database.prepare("SELECT title, message, audience, created_at AS date FROM notices ORDER BY id DESC LIMIT 10").all()
   });
+});
+
+app.patch('/api/admin/students/:id/approve', (request, response) => {
+  const user = currentUser(request);
+  if (!user || user.role !== 'admin') return response.status(403).json({ error: 'Admin access required.' });
+  const { room, bed } = request.body || {};
+  if (!room?.trim() || !bed?.trim()) return response.status(400).json({ error: 'Room number and bed number are required.' });
+  const result = database.prepare("UPDATE users SET status = 'approved', room = ?, bed = ? WHERE id = ? AND role = 'student'").run(room.trim(), bed.trim(), request.params.id);
+  if (!result.changes) return response.status(404).json({ error: 'Student request not found.' });
+  return response.json({ message: 'Student approved and bed allocated.' });
 });
 
 app.patch('/api/admin/account', (request, response) => {
