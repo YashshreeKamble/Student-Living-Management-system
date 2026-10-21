@@ -190,7 +190,86 @@ The server automatically seeds an initial administrator account on startup:
 
 ---
 
-## 8. Building for Production
+## 8. Traditional Hostel & PG Management Registers (`/api/registers`)
+
+Digitized paper registers, ledgers, vouchers, and notice boards for traditional Indian hostel and PG operations.
+
+### 1. Digital Student Admission Register (`/api/registers/admissions`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/admissions` | Authenticated | Query admission records with search, room, and document verification filters (Students only see their own admission slip) |
+| `POST` | `/api/registers/admissions` | Admin only | Direct admission with full particulars: guardian details, college, course, emergency contact, ID proofs |
+| `PATCH` | `/api/registers/admissions/:id` | Admin only | Verify documents, assign/change room and bed, update academic details |
+
+### 2. Rent & Payment Ledger (`/api/registers/ledger`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/ledger` | Authenticated | Query accounting ledger by month, mode, or status with financial summaries (Students only see their own ledger) |
+| `POST` | `/api/registers/ledger` | Admin only | Record fee payment with strict Cash vs Bank separation (`isCash: true` desk vouchers cannot be auto bank verified) |
+| `GET` | `/api/registers/ledger/:id/receipt` | Authenticated | Generate traditional print-friendly payment receipt with hostel letterhead and signature blocks |
+
+### 3. Visitor & Outpass Register (`/api/registers/visitors`, `/api/registers/outpasses`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/visitors` | Authenticated | Query gate visitor log (Students only see visitors logged for them) |
+| `POST` | `/api/registers/visitors` | Authenticated | Log visitor entry at main gate with ID proof verification |
+| `PATCH` | `/api/registers/visitors/:id/exit` | Authenticated | Mark visitor departure from hostel premises |
+| `GET` | `/api/registers/outpasses` | Authenticated | List student outing requests with automatic overdue calculation |
+| `POST` | `/api/registers/outpasses` | Authenticated | Apply for student outpass (late night departure or weekend leave) |
+| `PATCH` | `/api/registers/outpasses/:id/status`| Admin only | Warden approval, rejection with reason, or return marking |
+
+### 4. Mess & Meal Register (`/api/registers/mess`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/mess/menu` | Authenticated | View 7-day rotating weekly menu (Breakfast, Lunch, Snacks, Dinner, Specials) |
+| `PUT` | `/api/registers/mess/menu/:dayOfWeek`| Admin only | Update menu timetable for a specific day |
+| `GET` | `/api/registers/mess/attendance` | Authenticated | Query daily meal attendance counts and dietary preferences |
+| `POST` | `/api/registers/mess/attendance`| Admin only | Mark student attendance for breakfast, lunch, or dinner |
+
+### 5. Complaint & Maintenance Register (`/api/registers/complaints`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/complaints` | Authenticated | Search complaints by category, priority, or status |
+| `POST` | `/api/registers/complaints` | Authenticated | Log new maintenance ticket (Water, Electricity, Cleaning, Furniture, Internet, Mess, Other) |
+| `PATCH` | `/api/registers/complaints/:id` | Admin only | Assign maintenance staff, update status, and record resolution details |
+
+### 6. Digital Notice Board (`/api/registers/notices`)
+| Method | Endpoint | Access | Description |
+|---|---|---|---|
+| `GET` | `/api/registers/notices` | Authenticated | Fetch active announcements categorized by Hostel, Mess, Maintenance, Rules, Emergency |
+| `POST` | `/api/registers/notices` | Admin only | Publish circular with target audience, expiry date, and priority flag |
+| `PATCH` | `/api/registers/notices/:id/archive` | Admin only | Archive circular (preserves historical record without deletion) |
+
+### 7. Traditional Register & Report Printing
+- **Receipts**: Official fee receipt layout with GST/hostel details, breakdown, and signature lines (*Resident*, *Cashier*, *Warden*).
+- **Admission Slip**: Official student admission verification slip.
+- **Ledger Statement**: Print-ready statement with audit balances.
+- **CSV Exports**: One-click sanitized CSV exports for admissions, ledger, visitors, outpasses, and complaints.
+- **Signatures**: Embedded manual signature lines (*Prepared by Caretaker*, *Verified by Hostel Warden*, *Approved by Proprietor*).
+
+---
+
+## 9. Automated Testing
+
+Run the full end-to-end integration test suite verifying all 7 traditional registers and role-based isolation:
+
+```powershell
+node server/test_traditional_registers.js
+```
+
+All 8 test suites validate:
+1. Admin authentication & session security
+2. Student admission register CRUD & document verification
+3. Rent & payment ledger with strictly non-verified physical cash entries
+4. Visitor & outpass register with warden approval and overdue calculation
+5. Mess & meal register with 7-day weekly menu timetable and attendance
+6. Complaint register with category, priority, and staff assignment
+7. Digital notice board with non-destructive archiving
+8. Student isolation (zero data leakage across students) and role-based permission enforcement
+
+---
+
+## 10. Building for Production
 
 To create an optimized production build of the React frontend:
 
@@ -198,4 +277,5 @@ To create an optimized production build of the React frontend:
 npm run build:client
 ```
 
-The production assets will be built to `client/dist`. The Express backend is configured to automatically serve the `client/dist` static bundle when running in production mode (`NODE_ENV=production node server/server.js`).
+The production bundle will be built to `client/dist`. The Express backend automatically serves the `client/dist` bundle when running in production mode (`NODE_ENV=production node server/server.js`).
+
