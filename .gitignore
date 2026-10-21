@@ -3,3 +3,4 @@ arbor-house.sqlite
 arbor-house.sqlite-shm
 arbor-house.sqlite-wal
 .env
+*.zip
