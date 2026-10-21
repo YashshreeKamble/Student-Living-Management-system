@@ -29,7 +29,16 @@ async function loadAdminData() {
   const data = await response.json();
   document.querySelector('#student-count').textContent = data.students.length;
   document.querySelector('#room-table').innerHTML = `<div class="admin-row admin-head"><span>Room</span><span>Students</span><span>Beds</span><span>Availability</span></div>${data.rooms.map(room => `<div class="admin-row"><strong>${room.room}</strong><span>${room.students}</span><span>${room.beds}</span><em class="status-pill ${statusClass(room.vacancy)}">${room.vacancy}</em></div>`).join('')}`;
-  document.querySelector('#student-table').innerHTML = `<div class="admin-row admin-head"><span>Student</span><span>Email</span><span>Room</span><span>Status</span></div>${data.students.map(student => `<div class="admin-row"><strong>${student.name}</strong><span>${student.email}</span><span>${student.room || 'Not assigned'}</span><em class="status-pill green">${student.status}</em></div>`).join('')}`;
+  document.querySelector('#student-table').innerHTML = `<div class="student-table-scroll"><table class="student-directory"><thead><tr><th>Student</th><th>Email</th><th>Room</th><th>Bed</th><th>Status</th></tr></thead><tbody>${data.students.map(student => `<tr><td class="student-name">${student.name}</td><td>${student.email}</td><td>${student.room || 'Not assigned'}</td><td>${student.bed || 'Bed pending'}</td><td><em class="status-pill ${student.status === 'approved' ? 'green' : 'amber'}">${student.status === 'approved' ? 'Approved' : 'Pending'}${student.status !== 'approved' ? ` <button class="approve-student" data-id="${student.id}">Approve</button>` : ''}</em></td></tr>`).join('')}</tbody></table></div>`;
+  document.querySelectorAll('.approve-student').forEach(button => button.addEventListener('click', async () => {
+    const room = window.prompt('Enter room number');
+    if (!room) return;
+    const bed = window.prompt('Enter bed number');
+    if (!bed) return;
+    const response = await fetch(`/api/admin/students/${button.dataset.id}/approve`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ room, bed }) });
+    if (response.ok) { showToast('Student approved and bed allocated'); loadAdminData(); }
+    else showToast('Student approval failed');
+  }));
   document.querySelector('#payment-table').innerHTML = `<div class="admin-row admin-head"><span>Student</span><span>Amount</span><span>Date</span><span>Status</span></div>${data.payments.map(payment => `<div class="admin-row"><strong>${payment.student}</strong><span>${payment.amount}</span><span>${payment.date}</span><em class="status-pill ${statusClass(payment.status)}">${payment.status}</em></div>`).join('')}`;
   document.querySelector('#notice-list').innerHTML = data.notices.map(notice => `<div class="notice-item"><i data-lucide="megaphone"></i><span><strong>${notice.title}</strong><small>${notice.audience} · ${notice.date}</small></span></div>`).join('');
   lucide.createIcons();

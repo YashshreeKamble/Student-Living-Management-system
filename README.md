@@ -17,10 +17,11 @@ npm.cmd start
 
 Open http://localhost:3000. The server creates `arbor-house.sqlite` on first start.
 
-Initial accounts:
+Initial account:
 
-- Student: `riya@student.arborhouse.in` (room A-204)
-- Admin: `admin@arborhouse.in`
+- Admin: `demo@admin.in`
 - Password: the value supplied through `SEED_PASSWORD`
+
+Residents are added by the admin after setup. No sample resident accounts or notices are created.
 
 Passwords are stored as bcrypt hashes. Login sessions use an HttpOnly cookie and are stored in SQLite. Change the seed password before using this outside local development, and replace the seeded accounts with real users before production.
