@@ -37,10 +37,21 @@ import {
   UserPlus,
   Plus,
   Check,
-  ChevronsUpDown
+  ChevronsUpDown,
+  Printer,
+  Calendar,
+  Clock,
+  Eye,
+  FileText,
+  AlertTriangle,
+  Receipt,
+  Download,
+  ShieldCheck
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import api from '../../services/api';
 import '../../styles/styles.css';
+import '../../styles/admin.css';
 
 const viewData = {
   Residents: {
@@ -262,6 +273,127 @@ export default function StudentDashboard() {
     { id: 2, title: 'Assign urgent complaint', subtitle: 'Water leakage · Room B-206', completed: false },
     { id: 3, title: 'Approve visitor request', subtitle: 'For resident Priya Nair', completed: false }
   ]);
+
+  // Traditional Registers State
+  const [ledgerEntries, setLedgerEntries] = useState([]);
+  const [ledgerSummary, setLedgerSummary] = useState({ totalBilled: 0, totalPaid: 0, balance: 0 });
+  const [receiptData, setReceiptData] = useState(null);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+
+  const [messMenus, setMessMenus] = useState([]);
+
+  const [complaints, setComplaints] = useState([]);
+  const [showComplaintModal, setShowComplaintModal] = useState(false);
+  const [complaintForm, setComplaintForm] = useState({
+    category: 'Water',
+    title: '',
+    description: '',
+    priority: 'Medium'
+  });
+
+  const [outpasses, setOutpasses] = useState([]);
+  const [studentVisitors, setStudentVisitors] = useState([]);
+  const [outpassTab, setOutpassTab] = useState('outpasses'); // 'outpasses' | 'visitors'
+  const [showOutpassModal, setShowOutpassModal] = useState(false);
+  const [outpassForm, setOutpassForm] = useState({
+    destination: '',
+    reason: '',
+    departureTime: '',
+    expectedReturnTime: ''
+  });
+
+  const [notices, setNotices] = useState([]);
+  const [admissionProfile, setAdmissionProfile] = useState(null);
+  const [loadingData, setLoadingData] = useState(false);
+
+  const loadStudentData = async () => {
+    setLoadingData(true);
+    try {
+      if (activeView === 'Payments') {
+        const res = await api.getLedger();
+        if (res?.entries) {
+          setLedgerEntries(res.entries);
+          const totalPaid = res.entries.reduce((sum, e) => sum + (e.amountPaid || 0), 0);
+          const totalDue = res.entries.reduce((sum, e) => sum + (e.amountDue || 0), 0);
+          const balance = res.entries.reduce((sum, e) => sum + (e.balance || 0), 0);
+          setLedgerSummary({ totalBilled: totalDue, totalPaid, balance });
+        }
+      } else if (activeView === 'Mess & menu') {
+        const res = await api.getMessMenu();
+        if (res?.menus) setMessMenus(res.menus);
+      } else if (activeView === 'Complaints') {
+        const res = await api.getComplaints();
+        if (res?.complaints) setComplaints(res.complaints);
+      } else if (activeView === 'Visitors') {
+        const [opRes, visRes] = await Promise.all([
+          api.getOutpasses().catch(() => ({ outpasses: [] })),
+          api.getVisitors().catch(() => ({ visitors: [] }))
+        ]);
+        if (opRes?.outpasses) setOutpasses(opRes.outpasses);
+        if (visRes?.visitors) setStudentVisitors(visRes.visitors);
+      } else if (activeView === 'Notice board') {
+        const res = await api.getNotices();
+        if (res?.notices) setNotices(res.notices);
+      } else if (activeView === 'Residents') {
+        const res = await api.getAdmissions();
+        if (res?.admissions && res.admissions.length > 0) {
+          setAdmissionProfile(res.admissions[0]);
+        }
+      } else if (activeView === 'Overview') {
+        api.getNotices().then((res) => res?.notices && setNotices(res.notices)).catch(() => {});
+        api.getMessMenu().then((res) => res?.menus && setMessMenus(res.menus)).catch(() => {});
+      }
+    } catch (err) {
+      console.error('Error fetching student register data:', err);
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
+  useEffect(() => {
+    loadStudentData();
+  }, [activeView]);
+
+  const viewReceipt = async (id) => {
+    try {
+      const data = await api.getReceipt(id);
+      setReceiptData(data);
+      setShowReceiptModal(true);
+    } catch {
+      triggerToast('Could not load receipt');
+    }
+  };
+
+  const handleCreateComplaint = async (e) => {
+    e.preventDefault();
+    try {
+      await api.createComplaint({
+        ...complaintForm,
+        room: user?.room || 'Unassigned'
+      });
+      setShowComplaintModal(false);
+      setComplaintForm({ category: 'Water', title: '', description: '', priority: 'Medium' });
+      triggerToast('Maintenance complaint registered');
+      loadStudentData();
+    } catch (err) {
+      triggerToast(err.message || 'Failed to submit complaint');
+    }
+  };
+
+  const handleCreateOutpass = async (e) => {
+    e.preventDefault();
+    try {
+      await api.createOutpass({
+        ...outpassForm
+      });
+      setShowOutpassModal(false);
+      setOutpassForm({ destination: '', reason: '', departureTime: '', expectedReturnTime: '' });
+      triggerToast('Outpass request submitted to warden');
+      loadStudentData();
+    } catch (err) {
+      triggerToast(err.message || 'Failed to request outpass');
+    }
+  };
 
   const triggerToast = (message) => {
     setToastMessage(message);
@@ -1018,8 +1150,629 @@ export default function StudentDashboard() {
                 </span>
               </footer>
             </>
+          ) : activeView === 'Payments' ? (
+            /* 1. Traditional Rent & Payment Ledger */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Financial Ledger</p>
+                  <h1 id="page-title">
+                    Rent &amp; Payment Ledger <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Digitized accounting ledger of your monthly rent dues, physical cash desk vouchers, and verified bank transfers.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button className="btn-secondary" onClick={() => window.print()} type="button">
+                    <Printer size={15} /> Print Statement
+                  </button>
+                </div>
+              </section>
+
+              {/* Financial Summary Cards */}
+              <section className="stats-grid view-stats">
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span className="stat-icon"><IndianRupee size={17} /></span>
+                  </div>
+                  <p>Total Billed</p>
+                  <strong>₹{ledgerSummary.totalBilled.toLocaleString('en-IN')}</strong>
+                  <small>Academic year charges</small>
+                </article>
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span className="stat-icon"><Check size={17} /></span>
+                  </div>
+                  <p>Total Paid</p>
+                  <strong>₹{ledgerSummary.totalPaid.toLocaleString('en-IN')}</strong>
+                  <small>Verified &amp; cash desk entries</small>
+                </article>
+                <article className="stat-card">
+                  <div className="stat-top">
+                    <span className="stat-icon"><AlertTriangle size={17} /></span>
+                  </div>
+                  <p>Outstanding Balance</p>
+                  <strong style={{ color: ledgerSummary.balance > 0 ? '#dc2626' : '#16a34a' }}>
+                    ₹{ledgerSummary.balance.toLocaleString('en-IN')}
+                  </strong>
+                  <small>{ledgerSummary.balance > 0 ? 'Due for settlement' : 'All accounts settled'}</small>
+                </article>
+              </section>
+
+              {/* Ledger Table */}
+              <section className="register-card">
+                <div className="register-card-header">
+                  <div>
+                    <h2>Fee Transactions &amp; Receipts Ledger</h2>
+                    <small style={{ color: '#75848a' }}>Audited accounting records for Room {user?.room || 'N/A'}</small>
+                  </div>
+                  <button className="text-button no-print" onClick={loadStudentData} type="button">
+                    Refresh <RefreshCw size={14} />
+                  </button>
+                </div>
+                <div className="register-table-wrap">
+                  <table className="register-table">
+                    <thead>
+                      <tr>
+                        <th>Receipt No</th>
+                        <th>Fee Month</th>
+                        <th>Amount Due</th>
+                        <th>Amount Paid</th>
+                        <th>Balance</th>
+                        <th>Payment Mode</th>
+                        <th>Verification</th>
+                        <th>Date</th>
+                        <th className="no-print">Official Receipt</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {ledgerEntries.length === 0 ? (
+                        <tr>
+                          <td colSpan="9" style={{ textAlign: 'center', padding: '32px', color: '#75848a' }}>
+                            No payment entries found in ledger. Please contact accounts desk.
+                          </td>
+                        </tr>
+                      ) : (
+                        ledgerEntries.map((entry) => (
+                          <tr key={entry._id}>
+                            <td><strong>{entry.receiptNumber}</strong></td>
+                            <td>{entry.forMonth}</td>
+                            <td>₹{entry.amountDue.toLocaleString('en-IN')}</td>
+                            <td><strong style={{ color: '#12313a' }}>₹{entry.amountPaid.toLocaleString('en-IN')}</strong></td>
+                            <td>
+                              {entry.balance > 0 ? (
+                                <span style={{ color: '#dc2626', fontWeight: 700 }}>₹{entry.balance.toLocaleString('en-IN')}</span>
+                              ) : (
+                                <span style={{ color: '#16a34a', fontWeight: 600 }}>Nil</span>
+                              )}
+                            </td>
+                            <td>
+                              <span className={`badge ${entry.isCash ? 'cash' : 'bank'}`}>
+                                {entry.paymentMode} {entry.transactionRef ? `(${entry.transactionRef})` : ''}
+                              </span>
+                            </td>
+                            <td>
+                              <em className={`status-pill ${entry.isVerified ? 'green' : 'amber'}`}>
+                                {entry.isVerified ? 'Verified' : 'Desk Voucher'}
+                              </em>
+                            </td>
+                            <td>{entry.paymentDate ? entry.paymentDate.slice(0, 10) : ''}</td>
+                            <td className="no-print">
+                              <button
+                                className="btn-secondary"
+                                onClick={() => viewReceipt(entry._id)}
+                                type="button"
+                                style={{ padding: '4px 10px', fontSize: 11 }}
+                              >
+                                <Receipt size={13} /> View Receipt
+                              </button>
+                            </td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Signatures for Print */}
+                <div className="signatures print-only">
+                  <div className="signature-line">
+                    <p>Resident Signature</p>
+                    <small>{user?.name || 'Resident'}</small>
+                  </div>
+                  <div className="signature-line">
+                    <p>Cashier / Desk Clerk</p>
+                    <small>Accounts Department</small>
+                  </div>
+                  <div className="signature-line">
+                    <p>Hostel Warden Seal</p>
+                    <small>Arbor House PG</small>
+                  </div>
+                </div>
+              </section>
+            </div>
+          ) : activeView === 'Mess & menu' ? (
+            /* 2. Traditional Mess Timetable & Attendance */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Dining Operations</p>
+                  <h1 id="page-title">
+                    Weekly Mess Timetable &amp; Schedule <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Full 7-day rotating meal timetable with timing, daily specials, and dietary management.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button className="btn-secondary" onClick={() => window.print()} type="button">
+                    <Printer size={15} /> Print Timetable
+                  </button>
+                </div>
+              </section>
+
+              <section className="register-card">
+                <div className="register-card-header">
+                  <div>
+                    <h2>Weekly Meal Timetable (Mon - Sun)</h2>
+                    <small style={{ color: '#75848a' }}>Breakfast: 7:30 - 9:30 AM | Lunch: 12:30 - 2:30 PM | Tea: 5:00 - 6:00 PM | Dinner: 7:30 - 9:30 PM</small>
+                  </div>
+                </div>
+                <div className="register-table-wrap">
+                  <table className="register-table">
+                    <thead>
+                      <tr>
+                        <th>Day of Week</th>
+                        <th>Breakfast</th>
+                        <th>Lunch</th>
+                        <th>Evening Snacks</th>
+                        <th>Dinner</th>
+                        <th>Chef Special</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {messMenus.length === 0 ? (
+                        <tr>
+                          <td colSpan="6" style={{ textAlign: 'center', padding: '32px', color: '#75848a' }}>
+                            Loading mess timetable...
+                          </td>
+                        </tr>
+                      ) : (
+                        messMenus.map((m) => {
+                          const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' });
+                          const isToday = m.dayOfWeek === todayName;
+                          return (
+                            <tr key={m._id || m.dayOfWeek} style={{ background: isToday ? '#f0fdf4' : 'transparent' }}>
+                              <td>
+                                <strong>{m.dayOfWeek}</strong>
+                                {isToday && <span className="badge verified" style={{ marginLeft: 6 }}>Today</span>}
+                              </td>
+                              <td>{m.breakfast || '-'}</td>
+                              <td>{m.lunch || '-'}</td>
+                              <td>{m.snacks || '-'}</td>
+                              <td>{m.dinner || '-'}</td>
+                              <td><em style={{ color: '#bd821c', fontWeight: 600 }}>{m.specialItem || '-'}</em></td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style={{ padding: '16px 20px', background: '#fafbfc', borderTop: '1px solid #e6eceb', fontSize: 12, color: '#65767a' }}>
+                  <strong>Mess Policy Note:</strong> Residents requesting dietary adjustments (Jain/Gluten-Free) or meal skip notifications must register with the Mess Warden 24 hours prior.
+                </div>
+              </section>
+            </div>
+          ) : activeView === 'Complaints' ? (
+            /* 3. Traditional Maintenance Register */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Service Desk</p>
+                  <h1 id="page-title">
+                    Help &amp; Maintenance Register <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Log room or facility maintenance issues, track assigned staff, and inspect completion status.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button
+                    className="primary-button"
+                    onClick={() => setShowComplaintModal(true)}
+                    type="button"
+                  >
+                    <Plus size={15} /> Log New Complaint
+                  </button>
+                </div>
+              </section>
+
+              <section className="register-card">
+                <div className="register-card-header">
+                  <div>
+                    <h2>My Submitted Tickets</h2>
+                    <small style={{ color: '#75848a' }}>Official complaints log for {user?.name || 'Resident'} · Room {user?.room || 'N/A'}</small>
+                  </div>
+                  <button className="text-button no-print" onClick={loadStudentData} type="button">
+                    Refresh <RefreshCw size={14} />
+                  </button>
+                </div>
+                <div className="register-table-wrap">
+                  <table className="register-table">
+                    <thead>
+                      <tr>
+                        <th>Ticket No</th>
+                        <th>Category</th>
+                        <th>Issue Summary</th>
+                        <th>Priority</th>
+                        <th>Status</th>
+                        <th>Assigned Staff</th>
+                        <th>Resolution Notes</th>
+                        <th>Date Filed</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {complaints.length === 0 ? (
+                        <tr>
+                          <td colSpan="8" style={{ textAlign: 'center', padding: '36px', color: '#75848a' }}>
+                            No active maintenance complaints recorded. Everything in your room is in working order!
+                          </td>
+                        </tr>
+                      ) : (
+                        complaints.map((c) => (
+                          <tr key={c._id}>
+                            <td><strong>{c.complaintNumber}</strong></td>
+                            <td>
+                              <span className="badge" style={{ background: '#f1f5f9', color: '#334155' }}>
+                                {c.category}
+                              </span>
+                            </td>
+                            <td>
+                              <strong>{c.title}</strong>
+                              <p style={{ margin: '2px 0 0', fontSize: 11, color: '#75848a' }}>{c.description}</p>
+                            </td>
+                            <td>
+                              <span
+                                className={`badge ${
+                                  c.priority === 'Urgent'
+                                    ? 'outpass-rejected'
+                                    : c.priority === 'High' || c.priority === 'Medium'
+                                      ? 'cash'
+                                      : 'verified'
+                                }`}
+                              >
+                                {c.priority}
+                              </span>
+                            </td>
+                            <td>
+                              <em
+                                className={`status-pill ${
+                                  c.status === 'Resolved' || c.status === 'Closed'
+                                    ? 'green'
+                                    : c.status === 'In Progress'
+                                      ? 'amber'
+                                      : 'red'
+                                }`}
+                              >
+                                {c.status}
+                              </em>
+                            </td>
+                            <td>{c.assignedStaff || 'Unassigned'}</td>
+                            <td>{c.resolutionDetails || (c.status === 'Resolved' ? 'Completed' : 'Awaiting technician')}</td>
+                            <td>{c.createdAt ? c.createdAt.slice(0, 10) : ''}</td>
+                          </tr>
+                        ))
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </section>
+            </div>
+          ) : activeView === 'Visitors' ? (
+            /* 4. Outpass & Visitors Book */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Front Desk Register</p>
+                  <h1 id="page-title">
+                    Outpass &amp; Visitor Book <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Submit electronic hostel outpass requests, monitor warden approvals, and view guest entries.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button
+                    className="primary-button"
+                    onClick={() => setShowOutpassModal(true)}
+                    type="button"
+                  >
+                    <Plus size={15} /> Apply for Outpass
+                  </button>
+                </div>
+              </section>
+
+              {/* Sub-Tabs */}
+              <div className="register-tabs no-print">
+                <button
+                  className={`register-tab ${outpassTab === 'outpasses' ? 'active' : ''}`}
+                  onClick={() => setOutpassTab('outpasses')}
+                  type="button"
+                >
+                  <Clock size={14} /> My Outpass Requests ({outpasses.length})
+                </button>
+                <button
+                  className={`register-tab ${outpassTab === 'visitors' ? 'active' : ''}`}
+                  onClick={() => setOutpassTab('visitors')}
+                  type="button"
+                >
+                  <ScanFace size={14} /> Gate Visitor Log ({studentVisitors.length})
+                </button>
+              </div>
+
+              {outpassTab === 'outpasses' ? (
+                <section className="register-card">
+                  <div className="register-card-header">
+                    <div>
+                      <h2>Hostel Outpass &amp; Night Departure Register</h2>
+                      <small style={{ color: '#75848a' }}>All outings past 10:00 PM curfew require formal warden approval</small>
+                    </div>
+                  </div>
+                  <div className="register-table-wrap">
+                    <table className="register-table">
+                      <thead>
+                        <tr>
+                          <th>Outpass No</th>
+                          <th>Destination</th>
+                          <th>Reason / Purpose</th>
+                          <th>Departure Time</th>
+                          <th>Expected Return</th>
+                          <th>Actual Return</th>
+                          <th>Status</th>
+                          <th>Warden Approval</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {outpasses.length === 0 ? (
+                          <tr>
+                            <td colSpan="8" style={{ textAlign: 'center', padding: '32px', color: '#75848a' }}>
+                              No outpasses applied. Click "Apply for Outpass" to submit a departure request.
+                            </td>
+                          </tr>
+                        ) : (
+                          outpasses.map((op) => (
+                            <tr key={op._id}>
+                              <td><strong>{op.outpassNumber}</strong></td>
+                              <td>{op.destination}</td>
+                              <td>{op.reason}</td>
+                              <td>{op.departureTime ? new Date(op.departureTime).toLocaleString('en-IN') : '-'}</td>
+                              <td>{op.expectedReturnTime ? new Date(op.expectedReturnTime).toLocaleString('en-IN') : '-'}</td>
+                              <td>{op.actualReturnTime ? new Date(op.actualReturnTime).toLocaleString('en-IN') : 'Not yet returned'}</td>
+                              <td>
+                                <span
+                                  className={`badge ${
+                                    op.status === 'Approved'
+                                      ? 'outpass-approved'
+                                      : op.status === 'Rejected'
+                                        ? 'outpass-rejected'
+                                        : op.status === 'Overdue'
+                                          ? 'outpass-overdue'
+                                          : 'outpass-pending'
+                                  }`}
+                                >
+                                  {op.status}
+                                </span>
+                              </td>
+                              <td>{op.approvedBy || 'Pending Review'}</td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              ) : (
+                <section className="register-card">
+                  <div className="register-card-header">
+                    <div>
+                      <h2>Main Gate Visitor Log</h2>
+                      <small style={{ color: '#75848a' }}>Visitors logged at front security desk for {user?.name || 'Resident'}</small>
+                    </div>
+                  </div>
+                  <div className="register-table-wrap">
+                    <table className="register-table">
+                      <thead>
+                        <tr>
+                          <th>Visitor Name</th>
+                          <th>Contact Phone</th>
+                          <th>Relationship</th>
+                          <th>Purpose of Visit</th>
+                          <th>Gate Entry Time</th>
+                          <th>Gate Exit Time</th>
+                          <th>Premises Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {studentVisitors.length === 0 ? (
+                          <tr>
+                            <td colSpan="7" style={{ textAlign: 'center', padding: '32px', color: '#75848a' }}>
+                              No gate visitors logged on record.
+                            </td>
+                          </tr>
+                        ) : (
+                          studentVisitors.map((v) => (
+                            <tr key={v._id}>
+                              <td><strong>{v.visitorName}</strong></td>
+                              <td>{v.visitorPhone}</td>
+                              <td>{v.relation || 'Guest'}</td>
+                              <td>{v.purpose}</td>
+                              <td>{v.entryTime ? new Date(v.entryTime).toLocaleString('en-IN') : '-'}</td>
+                              <td>{v.exitTime ? new Date(v.exitTime).toLocaleString('en-IN') : '-'}</td>
+                              <td>
+                                <em className={`status-pill ${v.status === 'In Premises' ? 'amber' : 'green'}`}>
+                                  {v.status}
+                                </em>
+                              </td>
+                            </tr>
+                          ))
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </section>
+              )}
+            </div>
+          ) : activeView === 'Notice board' ? (
+            /* 5. Digital Notice Board */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Hostel Circulars</p>
+                  <h1 id="page-title">
+                    Official Notice Board <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Administrative circulars, curfew updates, mess announcements, and maintenance advisories.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button className="btn-secondary" onClick={() => window.print()} type="button">
+                    <Printer size={15} /> Print Notice Board
+                  </button>
+                </div>
+              </section>
+
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 20 }}>
+                {notices.length === 0 ? (
+                  <div className="register-card" style={{ gridColumn: '1 / -1', padding: '36px', textAlign: 'center', color: '#75848a' }}>
+                    No active circulars on notice board.
+                  </div>
+                ) : (
+                  notices.map((n) => (
+                    <article
+                      key={n._id}
+                      className="register-card"
+                      style={{
+                        padding: 22,
+                        borderLeft: n.isImportant ? '4px solid #f26f52' : '1px solid #e6eceb',
+                        margin: 0
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+                        <span className="badge" style={{ background: '#f1f5f9', color: '#334155' }}>
+                          {n.category || 'General'}
+                        </span>
+                        {n.isImportant && (
+                          <span className="badge outpass-rejected">Important Notice</span>
+                        )}
+                      </div>
+                      <h3 style={{ font: '600 16px "Space Grotesk", sans-serif', margin: '0 0 10px', color: '#19343c' }}>
+                        {n.title}
+                      </h3>
+                      <p style={{ fontSize: 13, color: '#456468', lineHeight: 1.55, margin: '0 0 16px' }}>
+                        {n.message}
+                      </p>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 11, color: '#82929a', borderTop: '1px solid #f1f5f5', paddingTop: 10 }}>
+                        <span>Target: {n.audience || 'All residents'}</span>
+                        <span>{n.publishDate ? n.publishDate.slice(0, 10) : ''}</span>
+                      </div>
+                    </article>
+                  ))
+                )}
+              </div>
+            </div>
+          ) : activeView === 'Residents' ? (
+            /* 6. Digital Admission Register */
+            <div className="register-view">
+              <section className="page-heading view-heading">
+                <div>
+                  <p className="eyebrow">Digital Admission Register</p>
+                  <h1 id="page-title">
+                    Resident Admission Record <span>✦</span>
+                  </h1>
+                  <p className="subheading">
+                    Official digitized admission register entry with verification status, room allocation, and emergency contacts.
+                  </p>
+                </div>
+                <div className="heading-actions no-print">
+                  <button className="btn-secondary" onClick={() => window.print()} type="button">
+                    <Printer size={15} /> Print Admission Slip
+                  </button>
+                </div>
+              </section>
+
+              <article className="receipt-paper">
+                <div className="receipt-header">
+                  <h1>Arbor House PG</h1>
+                  <p>12, College Road, Student Zone, University Enclave</p>
+                  <p>Ph: +91 98765 43210 | Email: hello@arborhouse.in</p>
+                  <h3 style={{ margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: 1.5, fontSize: 14 }}>
+                    OFFICIAL STUDENT ADMISSION REGISTER SLIP
+                  </h3>
+                </div>
+
+                <div className="receipt-meta" style={{ marginBottom: 20 }}>
+                  <div>
+                    <p><strong>Admission No:</strong> {admissionProfile?.admissionNumber || user?.admissionNumber || 'ADM-2026-001'}</p>
+                    <p><strong>Resident Name:</strong> {admissionProfile?.name || user?.name || 'Resident'}</p>
+                    <p><strong>Room Allocation:</strong> Room {admissionProfile?.room || user?.room || 'A-204'} (Bed {admissionProfile?.bed || user?.bed || '1'})</p>
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <p><strong>Date of Admission:</strong> {admissionProfile?.admissionDate ? admissionProfile.admissionDate.slice(0, 10) : '2026-08-01'}</p>
+                    <p><strong>Document Verification:</strong> <span className={`badge ${admissionProfile?.documentStatus === 'Verified' ? 'verified' : 'pending'}`}>{admissionProfile?.documentStatus || 'Verified'}</span></p>
+                    <p><strong>ID Proof:</strong> {admissionProfile?.idProofType || 'Aadhaar Card'} ({admissionProfile?.idProofNumber || 'Verified'})</p>
+                  </div>
+                </div>
+
+                <table className="receipt-table" style={{ marginBottom: 24 }}>
+                  <thead>
+                    <tr>
+                      <th>Category</th>
+                      <th>Registered Particulars</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td><strong>Academic Information</strong></td>
+                      <td>College: {admissionProfile?.college || 'City University'} | Course: {admissionProfile?.course || 'B.Tech CS'} | Year: {admissionProfile?.yearOfStudy || '2nd Year'}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Contact Details</strong></td>
+                      <td>Phone: {admissionProfile?.phone || user?.phone || '+91 98765 00000'} | Email: {admissionProfile?.email || user?.email}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Guardian &amp; Emergency</strong></td>
+                      <td>Guardian: {admissionProfile?.guardianName || 'Parent'} ({admissionProfile?.guardianRelation || 'Parent'}) | Phone: {admissionProfile?.guardianPhone || '+91 98111 22334'}</td>
+                    </tr>
+                    <tr>
+                      <td><strong>Permanent Address</strong></td>
+                      <td>{admissionProfile?.permanentAddress || '123, Heritage Colony, New Delhi, 110001'}</td>
+                    </tr>
+                  </tbody>
+                </table>
+
+                {/* Signatures */}
+                <div className="signatures">
+                  <div className="signature-line">
+                    <p>Student Signature</p>
+                    <small>{admissionProfile?.name || user?.name}</small>
+                  </div>
+                  <div className="signature-line">
+                    <p>Hostel Warden Verification</p>
+                    <small>Document Verified</small>
+                  </div>
+                  <div className="signature-line">
+                    <p>Proprietor / Seal</p>
+                    <small>Arbor House PG</small>
+                  </div>
+                </div>
+              </article>
+            </div>
           ) : (
-            /* Dynamic Directory View */
+            /* Fallback Dynamic Directory View for Rooms, Laundry, Services, Settings */
             (() => {
               const data = viewData[activeView];
               if (!data) return null;
@@ -1177,6 +1930,216 @@ export default function StudentDashboard() {
               </label>
               <button className="primary-button" type="submit">
                 Create resident <ArrowRight size={15} />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Traditional Printable Receipt Modal */}
+      {showReceiptModal && receiptData && (
+        <div className="modal-backdrop" onClick={(e) => e.target.className === 'modal-backdrop' && setShowReceiptModal(false)}>
+          <div className="modal modal-wide" role="dialog" style={{ background: 'transparent', boxShadow: 'none', padding: 0 }}>
+            <div className="receipt-paper">
+              <div className="no-print" style={{ display: 'flex', justifyContent: 'flex-end', gap: 10, marginBottom: 16 }}>
+                <button className="btn-secondary" onClick={() => window.print()} type="button">
+                  <Printer size={14} /> Print Receipt
+                </button>
+                <button className="btn-secondary" onClick={() => setShowReceiptModal(false)} type="button">
+                  <X size={14} /> Close
+                </button>
+              </div>
+
+              <div className="receipt-header">
+                <h1>{receiptData.hostel?.name || 'Arbor House PG'}</h1>
+                <p>{receiptData.hostel?.address || '12, College Road, Student Zone, University Enclave'}</p>
+                <p>Phone: {receiptData.hostel?.phone || '+91 98765 43210'} | Email: {receiptData.hostel?.email || 'hello@arborhouse.in'}</p>
+                <h3 style={{ margin: '14px 0 0', textTransform: 'uppercase', letterSpacing: 1.5, fontSize: 14 }}>
+                  OFFICIAL FEE PAYMENT RECEIPT
+                </h3>
+              </div>
+
+              <div className="receipt-meta">
+                <div>
+                  <p><strong>Receipt No:</strong> {receiptData.receipt.receiptNumber}</p>
+                  <p><strong>Resident Name:</strong> {receiptData.receipt.studentName}</p>
+                  <p><strong>Room Allocation:</strong> {receiptData.receipt.room}</p>
+                </div>
+                <div style={{ textAlign: 'right' }}>
+                  <p><strong>Payment Date:</strong> {receiptData.receipt.paymentDate ? receiptData.receipt.paymentDate.slice(0, 10) : ''}</p>
+                  <p><strong>Fee Month:</strong> {receiptData.receipt.forMonth}</p>
+                  <p><strong>Payment Mode:</strong> {receiptData.receipt.paymentMode}</p>
+                </div>
+              </div>
+
+              <table className="receipt-table">
+                <thead>
+                  <tr>
+                    <th>Item Description</th>
+                    <th>Payment Mode</th>
+                    <th>Verification</th>
+                    <th style={{ textAlign: 'right' }}>Amount Paid</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>{receiptData.receipt.paymentType} ({receiptData.receipt.forMonth})</td>
+                    <td>{receiptData.receipt.paymentMode} {receiptData.receipt.transactionRef && `(${receiptData.receipt.transactionRef})`}</td>
+                    <td>{receiptData.receipt.isVerified ? 'Bank Verified' : 'Cash Desk Receipt'}</td>
+                    <td style={{ textAlign: 'right', fontWeight: 700 }}>₹{receiptData.receipt.amountPaid.toLocaleString('en-IN')}</td>
+                  </tr>
+                  <tr className="total-row">
+                    <td colSpan={3}>Total Received</td>
+                    <td style={{ textAlign: 'right' }}>₹{receiptData.receipt.amountPaid.toLocaleString('en-IN')}</td>
+                  </tr>
+                  {receiptData.receipt.balance > 0 && (
+                    <tr>
+                      <td colSpan={3} style={{ color: '#dc2626' }}>Balance Remaining Due</td>
+                      <td style={{ textAlign: 'right', color: '#dc2626', fontWeight: 700 }}>₹{receiptData.receipt.balance.toLocaleString('en-IN')}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+
+              <div className="signatures">
+                <div className="signature-line">
+                  <p>Resident Signature</p>
+                  <small>{receiptData.receipt.studentName}</small>
+                </div>
+                <div className="signature-line">
+                  <p>Authorized Cashier</p>
+                  <small>Desk Clerk</small>
+                </div>
+                <div className="signature-line">
+                  <p>Warden / Proprietor</p>
+                  <small>Arbor House PG</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Raise Maintenance Complaint Modal */}
+      {showComplaintModal && (
+        <div className="modal-backdrop" onClick={(e) => e.target.className === 'modal-backdrop' && setShowComplaintModal(false)}>
+          <div className="modal" role="dialog" style={{ width: 'min(480px, 94vw)' }}>
+            <button className="modal-close" onClick={() => setShowComplaintModal(false)} type="button">
+              <X size={15} />
+            </button>
+            <p className="eyebrow">Service Desk</p>
+            <h2>Raise Maintenance Complaint</h2>
+            <p className="modal-copy">Submit a maintenance or repair ticket for your room or common hostel areas.</p>
+            <form onSubmit={handleCreateComplaint}>
+              <div className="form-grid-2">
+                <div className="modal-field">
+                  <label>Issue Category</label>
+                  <select
+                    value={complaintForm.category}
+                    onChange={(e) => setComplaintForm({ ...complaintForm, category: e.target.value })}
+                  >
+                    <option value="Water">Water / Plumbing</option>
+                    <option value="Electricity">Electricity / Fan / Light</option>
+                    <option value="Cleaning">Housekeeping / Cleaning</option>
+                    <option value="Furniture">Furniture / Bed / Wardrobe</option>
+                    <option value="Internet">Wi-Fi &amp; Internet</option>
+                    <option value="Mess">Mess &amp; Food Quality</option>
+                    <option value="Other">Other Maintenance</option>
+                  </select>
+                </div>
+                <div className="modal-field">
+                  <label>Priority</label>
+                  <select
+                    value={complaintForm.priority}
+                    onChange={(e) => setComplaintForm({ ...complaintForm, priority: e.target.value })}
+                  >
+                    <option value="Low">Low (General)</option>
+                    <option value="Medium">Medium (Standard)</option>
+                    <option value="Urgent">Urgent (Immediate attention)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="modal-field">
+                <label>Issue Title *</label>
+                <input
+                  required
+                  placeholder="e.g. Geyser not heating water in bathroom"
+                  value={complaintForm.title}
+                  onChange={(e) => setComplaintForm({ ...complaintForm, title: e.target.value })}
+                />
+              </div>
+              <div className="modal-field">
+                <label>Detailed Description *</label>
+                <textarea
+                  required
+                  rows={3}
+                  style={{ width: '100%', padding: '10px', borderRadius: 6, border: '1px solid #dae5e2', font: 'inherit', boxSizing: 'border-box' }}
+                  placeholder="Describe the problem, when it started, and specific location..."
+                  value={complaintForm.description}
+                  onChange={(e) => setComplaintForm({ ...complaintForm, description: e.target.value })}
+                />
+              </div>
+              <button className="primary-button" type="submit" style={{ marginTop: 12 }}>
+                Submit Complaint Ticket <ArrowRight size={14} />
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Apply for Outpass Modal */}
+      {showOutpassModal && (
+        <div className="modal-backdrop" onClick={(e) => e.target.className === 'modal-backdrop' && setShowOutpassModal(false)}>
+          <div className="modal" role="dialog" style={{ width: 'min(480px, 94vw)' }}>
+            <button className="modal-close" onClick={() => setShowOutpassModal(false)} type="button">
+              <X size={15} />
+            </button>
+            <p className="eyebrow">Front Desk Register</p>
+            <h2>Apply for Hostel Outpass</h2>
+            <p className="modal-copy">Request warden permission for late evening outing, weekend leave, or campus absence.</p>
+            <form onSubmit={handleCreateOutpass}>
+              <div className="modal-field">
+                <label>Destination *</label>
+                <input
+                  required
+                  placeholder="e.g. Home (Jaipur), University Library, City Center"
+                  value={outpassForm.destination}
+                  onChange={(e) => setOutpassForm({ ...outpassForm, destination: e.target.value })}
+                />
+              </div>
+              <div className="modal-field">
+                <label>Reason / Purpose *</label>
+                <input
+                  required
+                  placeholder="e.g. Attending family function, academic research"
+                  value={outpassForm.reason}
+                  onChange={(e) => setOutpassForm({ ...outpassForm, reason: e.target.value })}
+                />
+              </div>
+              <div className="form-grid-2">
+                <div className="modal-field">
+                  <label>Departure Date &amp; Time</label>
+                  <input
+                    type="datetime-local"
+                    value={outpassForm.departureTime}
+                    onChange={(e) => setOutpassForm({ ...outpassForm, departureTime: e.target.value })}
+                  />
+                </div>
+                <div className="modal-field">
+                  <label>Expected Return *</label>
+                  <input
+                    required
+                    type="datetime-local"
+                    value={outpassForm.expectedReturnTime}
+                    onChange={(e) => setOutpassForm({ ...outpassForm, expectedReturnTime: e.target.value })}
+                  />
+                </div>
+              </div>
+              <p style={{ fontSize: 11, color: '#65767a', margin: '8px 0 14px' }}>
+                Note: An SMS/Notification will be logged with your registered parent/guardian phone ({user?.guardianPhone || 'on file'}).
+              </p>
+              <button className="primary-button" type="submit">
+                Submit Outpass to Warden <ArrowRight size={14} />
               </button>
             </form>
           </div>

@@ -12,10 +12,31 @@ const noticeSchema = new mongoose.Schema(
       required: [true, 'Notice message is required'],
       trim: true
     },
+    category: {
+      type: String,
+      enum: ['General', 'Mess', 'Maintenance', 'Emergency', 'Holiday', 'Rules & Regulation', 'Water', 'Electricity', 'Academic', 'Hostel'],
+      default: 'General'
+    },
     audience: {
       type: String,
       default: 'All residents',
       trim: true
+    },
+    isImportant: {
+      type: Boolean,
+      default: false
+    },
+    isArchived: {
+      type: Boolean,
+      default: false
+    },
+    publishDate: {
+      type: Date,
+      default: Date.now
+    },
+    expiryDate: {
+      type: Date,
+      default: null
     }
   },
   {
