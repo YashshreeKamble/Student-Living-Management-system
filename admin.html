@@ -250,59 +250,6 @@
       .admin-row em {
         justify-self: start;
       }
-      .student-table-scroll {
-        margin-top: 19px;
-        overflow-x: auto;
-        border: 1px solid #e6eceb;
-        border-radius: 7px;
-      }
-      .student-directory {
-        width: 100%;
-        min-width: 680px;
-        border-collapse: collapse;
-        font-size: 14px;
-      }
-      .student-directory th,
-      .student-directory td {
-        padding: 14px 16px;
-        text-align: left;
-        border-bottom: 1px solid #e6eceb;
-        white-space: nowrap;
-      }
-      .student-directory th {
-        background: #f4f8f7;
-        color: #65767a;
-        font: 700 11px "Space Grotesk";
-        letter-spacing: .8px;
-        text-transform: uppercase;
-      }
-      .student-directory tbody tr:last-child td {
-        border-bottom: 0;
-      }
-      .student-directory tbody tr:hover {
-        background: #f8fbfa;
-      }
-      .student-directory td {
-        color: #65767a;
-      }
-      .student-directory .student-name {
-        color: #19343c;
-        font: 700 15px "Space Grotesk";
-      }
-      .student-directory td:nth-child(2) {
-        color: #1c9b8b;
-        font-weight: 600;
-      }
-      .student-directory td:nth-child(3),
-      .student-directory td:nth-child(4) {
-        color: #19343c;
-        font-weight: 600;
-      }
-      .student-directory .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 7px;
-      }
       .notice-item {
         display: flex;
         gap: 10px;
@@ -407,9 +354,6 @@
           grid-row: 1;
           justify-self: end;
         }
-        .student-table-scroll {
-          margin-top: 16px;
-        }
       }
     </style>
   </head>
@@ -460,16 +404,16 @@
             <i data-lucide="bed-double"></i
             ><span
               ><small>Occupied beds</small
-              ><strong>0 <em>/ 0</em></strong></span
+              ><strong>164 <em>/ 184</em></strong></span
             >
           </article>
           <article class="admin-stat">
             <i data-lucide="bed-single"></i
-              ><span><small>Vacant beds</small><strong>0</strong></span>
+            ><span><small>Vacant beds</small><strong>14</strong></span>
           </article>
           <article class="admin-stat">
             <i data-lucide="wallet-cards"></i
-              ><span><small>Pending payments</small><strong>₹0</strong></span>
+            ><span><small>Pending payments</small><strong>₹1.16L</strong></span>
           </article>
         </section>
         <section class="admin-grid">
@@ -516,7 +460,7 @@
                 <p class="eyebrow">Finance</p>
                 <h2>Recent transactions</h2>
               </div>
-              <strong class="admin-total">Collected this month: ₹0</strong>
+              <strong class="admin-total">Collected this month: ₹8.42L</strong>
             </div>
             <div class="admin-table" id="payment-table">
               <div class="admin-row admin-head">

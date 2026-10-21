@@ -210,27 +210,10 @@
         gap: 16px;
       }
       .facility {
+        padding: 22px 18px;
         border: 1px solid var(--line);
         background: #fbfcfa;
         border-radius: 7px;
-        overflow: hidden;
-      }
-      .facility-media {
-        height: 150px;
-        overflow: hidden;
-      }
-      .facility-media img {
-        width: 100%;
-        height: 100%;
-        display: block;
-        object-fit: cover;
-        transition: transform 0.35s ease;
-      }
-      .facility:hover .facility-media img {
-        transform: scale(1.04);
-      }
-      .facility-content {
-        padding: 18px;
       }
       .facility-icon {
         display: grid;
@@ -527,56 +510,30 @@
         </div>
         <div class="facility-grid">
           <article class="facility">
-            <div class="facility-media">
-              <img
-                src="https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=700&q=80"
-                alt="Network equipment providing fast Wi-Fi"
-              />
-            </div>
-            <div class="facility-content">
-              <span class="facility-icon"><i data-lucide="wifi"></i></span>
-              <h3>Fast Wi-Fi</h3>
-              <p>Reliable internet for classes, projects, and late-night study.</p>
-            </div>
+            <span class="facility-icon"><i data-lucide="wifi"></i></span>
+            <h3>Fast Wi-Fi</h3>
+            <p>
+              Reliable internet for classes, projects, and late-night study.
+            </p>
           </article>
           <article class="facility">
-            <div class="facility-media">
-              <img
-                src="https://images.unsplash.com/photo-1547592180-85f173990554?auto=format&fit=crop&w=700&q=80"
-                alt="Fresh meal prepared in the Arbor House kitchen"
-              />
-            </div>
-            <div class="facility-content">
-              <span class="facility-icon"><i data-lucide="utensils"></i></span>
-              <h3>Fresh meals</h3>
-              <p>Breakfast, lunch, and dinner made fresh every day.</p>
-            </div>
+            <span class="facility-icon"><i data-lucide="utensils"></i></span>
+            <h3>Fresh meals</h3>
+            <p>Breakfast, lunch, and dinner made fresh every day.</p>
           </article>
           <article class="facility">
-            <div class="facility-media">
-              <img
-                src="https://images.unsplash.com/photo-1558008258-3256797b43f3?auto=format&fit=crop&w=700&q=80"
-                alt="Secure entrance to the Arbor House property"
-              />
-            </div>
-            <div class="facility-content">
-              <span class="facility-icon"><i data-lucide="shield-check"></i></span>
-              <h3>Safe &amp; secure</h3>
-              <p>24/7 security, visitor checks, and a caring support team.</p>
-            </div>
+            <span class="facility-icon"
+              ><i data-lucide="shield-check"></i
+            ></span>
+            <h3>Safe &amp; secure</h3>
+            <p>24/7 security, visitor checks, and a caring support team.</p>
           </article>
           <article class="facility">
-            <div class="facility-media">
-              <img
-                src="https://images.unsplash.com/photo-1517677208171-0bc6725a3e60?auto=format&fit=crop&w=700&q=80"
-                alt="Clean laundry ready for pickup"
-              />
-            </div>
-            <div class="facility-content">
-              <span class="facility-icon"><i data-lucide="washing-machine"></i></span>
-              <h3>Laundry service</h3>
-              <p>Easy pickup and drop-off laundry service within the property.</p>
-            </div>
+            <span class="facility-icon"
+              ><i data-lucide="washing-machine"></i
+            ></span>
+            <h3>Laundry service</h3>
+            <p>Easy pickup and drop-off laundry service within the property.</p>
           </article>
         </div>
       </section>
@@ -656,7 +613,7 @@
         <p id="login-copy">
           Sign in to manage your room, rent, meals, and requests.
         </p>
-        <form class="login-form" id="login-form" autocomplete="off">
+        <form class="login-form" id="login-form">
           <label id="name-label" for="login-name" hidden>Full name</label
           ><input id="login-name" hidden placeholder="Your full name" /><label
             for="login-email"
@@ -666,7 +623,6 @@
             required
             type="email"
             placeholder="you@example.com"
-            autocomplete="new-password"
           /><label for="login-password">Password</label
           ><input
             id="login-password"
@@ -674,7 +630,6 @@
             type="password"
             minlength="8"
             placeholder="At least 8 characters"
-            autocomplete="new-password"
           /><button class="login-submit" type="submit">
             Continue <i data-lucide="arrow-right"></i>
           </button>
@@ -700,15 +655,7 @@
       const apiBase = window.location.protocol === "file:" ? "http://localhost:3000" : "";
       let selectedRole = "student";
       let registerMode = false;
-      function clearLoginForm() {
-        form.reset();
-        nameInput.value = "";
-        document.querySelector("#login-email").value = "";
-        document.querySelector("#login-password").value = "";
-        copy.style.color = "";
-      }
       function openLogin(role) {
-        clearLoginForm();
         selectedRole = role.toLowerCase();
         registerMode = false;
         nameLabel.hidden = true;
@@ -721,8 +668,6 @@
             ? "Sign in to manage your room, rent, meals, and requests."
             : "Sign in to manage residents, rooms, payments, and daily operations.";
         modal.classList.add("open");
-        window.setTimeout(clearLoginForm, 0);
-        window.setTimeout(clearLoginForm, 150);
         document.querySelector("#login-email").focus();
       }
       modeToggle.addEventListener("click", () => {
@@ -750,15 +695,9 @@
         );
       document
         .querySelector("#modal-close")
-        .addEventListener("click", () => {
-          modal.classList.remove("open");
-          clearLoginForm();
-        });
+        .addEventListener("click", () => modal.classList.remove("open"));
       modal.addEventListener("click", (event) => {
-        if (event.target === modal) {
-          modal.classList.remove("open");
-          clearLoginForm();
-        }
+        if (event.target === modal) modal.classList.remove("open");
       });
       form.addEventListener("submit", async (event) => {
         event.preventDefault();
@@ -817,10 +756,7 @@
         }
       });
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          modal.classList.remove("open");
-          clearLoginForm();
-        }
+        if (event.key === "Escape") modal.classList.remove("open");
       });
     </script>
   </body>

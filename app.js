@@ -169,9 +169,5 @@ fetch('/api/auth/me')
     if (userRole) userRole.textContent = user.role === 'admin' ? 'Property admin' : 'Student';
     const roomNumber = document.querySelector('.room-number');
     if (roomNumber) roomNumber.textContent = user.room || 'Not assigned';
-    const roomSummary = document.querySelector('.student-card .student-muted');
-    if (roomSummary) roomSummary.textContent = `${user.email} · ${user.bed ? `Bed ${user.bed}` : 'Bed not allocated'}`;
-    const roomDetails = document.querySelector('.student-card .room-details');
-    if (roomDetails) roomDetails.innerHTML = `<span><strong>Booking status</strong>${user.status === 'approved' ? 'Approved' : 'Pending approval'}</span><span><strong>Bed</strong>${user.bed || 'Not assigned'}</span>`;
   })
   .catch(() => {});
