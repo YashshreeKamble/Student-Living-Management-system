@@ -75,8 +75,7 @@ app.post('/api/auth/login', (request, response) => {
   if (!user || !bcrypt.compareSync(password, user.password_hash)) {
     return response.status(401).json({ error: 'The email, name, or password is incorrect.' });
   }
-  if (user.role === 'student' && user.status !== 'approved') {
-    return response.status(403).json({ error: 'Your registration is pending admin approval and bed allocation.' });
+  // Student can log in directly to view dashboard);
   }
   const token = crypto.randomBytes(32).toString('hex');
   database.prepare('INSERT INTO sessions (token, user_id, expires_at) VALUES (?, ?, ?)').run(token, user.id, Date.now() + 1000 * 60 * 60 * 24 * 7);
@@ -101,8 +100,8 @@ app.post('/api/auth/register', (request, response) => {
     return response.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
   }
   try {
-    database.prepare("INSERT INTO users (name, email, password_hash, role, room, status) VALUES (?, ?, ?, ?, ?, 'pending')").run(name.trim(), normalizedEmail, bcrypt.hashSync(password, 12), 'student', null);
-    return response.status(201).json({ message: 'Registration submitted. An admin must approve your account and allocate a bed before you can sign in.' });
+    database.prepare("INSERT INTO users (name, email, password_hash, role, room, bed, status) VALUES (?, ?, ?, ?, ?, ?, 'approved')").run(name.trim(), normalizedEmail, bcrypt.hashSync(password, 12), 'student', 'C-302', 'Bed 2');
+    return response.status(201).json({ message: 'Account created successfully! You can now sign in.' });
   } catch (error) {
     if (error.code?.startsWith('SQLITE_CONSTRAINT')) return response.status(409).json({ error: 'An account with this email already exists. Please sign in.' });
     console.error('Registration failed:', error);

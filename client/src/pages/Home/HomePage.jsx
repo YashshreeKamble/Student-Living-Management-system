@@ -10,7 +10,9 @@ import {
   TrainFront,
   ShoppingBag,
   Hospital,
-  X
+  X,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/home.css';
@@ -26,6 +28,7 @@ export default function HomePage() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [statusMessage, setStatusMessage] = useState({ text: '', isError: false });
   const [submitting, setSubmitting] = useState(false);
 
@@ -43,6 +46,7 @@ export default function HomePage() {
     setName('');
     setEmail('');
     setPassword('');
+    setShowPassword(false);
     setStatusMessage({ text: '', isError: false });
     setModalOpen(true);
   };
@@ -52,6 +56,7 @@ export default function HomePage() {
     setName('');
     setEmail('');
     setPassword('');
+    setShowPassword(false);
     setStatusMessage({ text: '', isError: false });
   };
 
@@ -70,11 +75,12 @@ export default function HomePage() {
 
     try {
       if (registerMode) {
-        await register(name, email, password);
+        const res = await register(name, email, password);
         setRegisterMode(false);
         setPassword('');
+        setShowPassword(false);
         setStatusMessage({
-          text: 'Account created successfully. Please sign in to continue.',
+          text: res?.message || 'Account created successfully! Please sign in to continue.',
           isError: false
         });
       } else {
@@ -366,27 +372,38 @@ export default function HomePage() {
                 />
               </>
             )}
-            <label htmlFor="login-email">Email</label>
+            <label htmlFor="login-email">{registerMode ? 'Email' : 'Email or Name'}</label>
             <input
               id="login-email"
               required
-              type="email"
-              placeholder="you@example.com"
+              type={registerMode ? 'email' : 'text'}
+              placeholder={registerMode ? 'you@example.com' : 'you@example.com or Full Name'}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              autoComplete="new-password"
+              autoComplete="username"
             />
             <label htmlFor="login-password">Password</label>
-            <input
-              id="login-password"
-              required
-              type="password"
-              minLength={8}
-              placeholder="At least 8 characters"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-            />
+            <div className="password-input-wrapper">
+              <input
+                id="login-password"
+                required
+                type={showPassword ? 'text' : 'password'}
+                minLength={8}
+                placeholder="At least 8 characters"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete={registerMode ? 'new-password' : 'current-password'}
+              />
+              <button
+                type="button"
+                className="password-toggle-btn"
+                onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                title={showPassword ? 'Hide password' : 'Show password'}
+              >
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
             <button className="login-submit" type="submit" disabled={submitting}>
               {submitting
                 ? registerMode
@@ -397,6 +414,40 @@ export default function HomePage() {
             </button>
           </form>
 
+          {!registerMode && (
+            <div className="demo-credentials-box">
+              <div className="demo-credentials-header">
+                <span>Demo Accounts (Click to Autofill):</span>
+              </div>
+              <div className="demo-credentials-pills">
+                <button
+                  type="button"
+                  className="demo-pill"
+                  onClick={() => {
+                    setSelectedRole('student');
+                    setEmail('ananya@student.in');
+                    setPassword('student123');
+                    setStatusMessage({ text: 'Loaded demo student credentials', isError: false });
+                  }}
+                >
+                  Student: ananya@student.in
+                </button>
+                <button
+                  type="button"
+                  className="demo-pill"
+                  onClick={() => {
+                    setSelectedRole('admin');
+                    setEmail('demo@admin.in');
+                    setPassword('admin123');
+                    setStatusMessage({ text: 'Loaded demo admin credentials', isError: false });
+                  }}
+                >
+                  Admin: demo@admin.in
+                </button>
+              </div>
+            </div>
+          )}
+
           {selectedRole === 'student' && (
             <button
               className="mode-toggle"
@@ -404,6 +455,7 @@ export default function HomePage() {
               type="button"
               onClick={() => {
                 setRegisterMode(!registerMode);
+                setShowPassword(false);
                 setStatusMessage({ text: '', isError: false });
               }}
             >

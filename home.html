@@ -81,6 +81,83 @@
       }
       .login-toggle,
       .hero-button,
+      .password-input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        width: 100%;
+      }
+      .login-form .password-input-wrapper input,
+      .password-input-wrapper input {
+        width: 100%;
+        padding-right: 42px !important;
+      }
+      .login-form .password-toggle-btn,
+      .password-toggle-btn {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: transparent;
+        border: 0;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--muted);
+        padding: 4px;
+        border-radius: 4px;
+        line-height: 0;
+        z-index: 2;
+        transition: color 0.15s ease;
+      }
+      .login-form .password-toggle-btn:hover,
+      .password-toggle-btn:hover {
+        color: var(--ink);
+      }
+      .login-form .password-toggle-btn svg,
+      .password-toggle-btn svg {
+        width: 18px;
+        height: 18px;
+        display: block;
+      }
+      .demo-credentials-box {
+        margin-top: 15px;
+        padding: 10px 12px;
+        background: #f2f8f6;
+        border: 1px dashed #b7d6ce;
+        border-radius: 6px;
+        text-align: left;
+      }
+      .demo-credentials-header {
+        font-size: 10.5px;
+        font-weight: 700;
+        color: #12313a;
+        margin-bottom: 6px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .demo-credentials-pills {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .demo-pill {
+        padding: 5px 9px;
+        background: #fff;
+        border: 1px solid #c2e2db;
+        border-radius: 5px;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--teal);
+        cursor: pointer;
+        transition: all 0.15s ease;
+      }
+      .demo-pill:hover {
+        background: var(--teal);
+        color: #fff;
+        border-color: var(--teal);
+      }
       .login-submit {
         display: inline-flex;
         align-items: center;
@@ -668,17 +745,41 @@
             placeholder="you@example.com"
             autocomplete="new-password"
           /><label for="login-password">Password</label
-          ><input
-            id="login-password"
-            required
-            type="password"
-            minlength="8"
-            placeholder="At least 8 characters"
-            autocomplete="new-password"
-          /><button class="login-submit" type="submit">
+          ><div class="password-input-wrapper">
+            <input
+              id="login-password"
+              required
+              type="password"
+              minlength="8"
+              placeholder="At least 8 characters"
+              autocomplete="current-password"
+            />
+            <button
+              type="button"
+              id="password-toggle-btn"
+              class="password-toggle-btn"
+              aria-label="Show password"
+              title="Show password"
+            >
+              <i data-lucide="eye"></i>
+            </button>
+          </div><button class="login-submit" type="submit">
             Continue <i data-lucide="arrow-right"></i>
           </button>
         </form>
+        <div class="demo-credentials-box" id="demo-credentials-box">
+          <div class="demo-credentials-header">
+            <span>Demo Accounts (Click to Autofill):</span>
+          </div>
+          <div class="demo-credentials-pills">
+            <button type="button" class="demo-pill" id="fill-demo-student">
+              Student: ananya@student.in
+            </button>
+            <button type="button" class="demo-pill" id="fill-demo-admin">
+              Admin: demo@admin.in
+            </button>
+          </div>
+        </div>
         <button class="mode-toggle" id="mode-toggle" type="button">
           New student? Create an account
         </button>
@@ -689,6 +790,51 @@
     </div>
     <script>
       lucide.createIcons();
+      const passwordInput = document.querySelector("#login-password");
+      const passwordToggleBtn = document.querySelector("#password-toggle-btn");
+      const demoBox = document.querySelector("#demo-credentials-box");
+
+      function resetPasswordVisibility() {
+        if (passwordInput && passwordToggleBtn) {
+          passwordInput.type = "password";
+          passwordToggleBtn.setAttribute("aria-label", "Show password");
+          passwordToggleBtn.title = "Show password";
+          passwordToggleBtn.innerHTML = '<i data-lucide="eye"></i>';
+          lucide.createIcons();
+        }
+      }
+
+      if (passwordToggleBtn && passwordInput) {
+        passwordToggleBtn.addEventListener("click", () => {
+          const isPassword = passwordInput.type === "password";
+          passwordInput.type = isPassword ? "text" : "password";
+          passwordToggleBtn.setAttribute(
+            "aria-label",
+            isPassword ? "Hide password" : "Show password"
+          );
+          passwordToggleBtn.title = isPassword ? "Hide password" : "Show password";
+          passwordToggleBtn.innerHTML = isPassword
+            ? '<i data-lucide="eye-off"></i>'
+            : '<i data-lucide="eye"></i>';
+          lucide.createIcons();
+        });
+      }
+      const fillStudentBtn = document.querySelector("#fill-demo-student");
+      if (fillStudentBtn) {
+        fillStudentBtn.addEventListener("click", () => {
+          openLogin("Student");
+          document.querySelector("#login-email").value = "ananya@student.in";
+          passwordInput.value = "student123";
+        });
+      }
+      const fillAdminBtn = document.querySelector("#fill-demo-admin");
+      if (fillAdminBtn) {
+        fillAdminBtn.addEventListener("click", () => {
+          openLogin("Admin");
+          document.querySelector("#login-email").value = "demo@admin.in";
+          passwordInput.value = "admin123";
+        });
+      }
       const modal = document.querySelector("#login-modal");
       const title = document.querySelector("#login-title");
       const copy = document.querySelector("#login-copy");
@@ -705,6 +851,7 @@
         nameInput.value = "";
         document.querySelector("#login-email").value = "";
         document.querySelector("#login-password").value = "";
+        resetPasswordVisibility();
         copy.style.color = "";
       }
       function openLogin(role) {
@@ -727,6 +874,8 @@
       }
       modeToggle.addEventListener("click", () => {
         registerMode = !registerMode;
+        if (demoBox) demoBox.hidden = registerMode;
+        resetPasswordVisibility();
         nameLabel.hidden = !registerMode;
         nameInput.hidden = !registerMode;
         nameInput.required = registerMode;
